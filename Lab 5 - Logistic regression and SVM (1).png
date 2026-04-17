@@ -1,0 +1,505 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "9c4aaa8d-a925-49d1-a67c-290cb038e381",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "from sklearn.model_selection import train_test_split, GridSearchCV\n",
+    "from sklearn.preprocessing import StandardScaler\n",
+    "from sklearn.linear_model import LogisticRegression\n",
+    "from sklearn.svm import SVC\n",
+    "from sklearn.pipeline import Pipeline\n",
+    "from sklearn.metrics import accuracy_score, precision_score, recall_score\n",
+    "import urllib.request"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "b6100dfb-8ad5-4944-99c4-3fcf445efbae",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# classification metrics\n",
+    "def classification_metrics(y_actual, y_pred):\n",
+    "    acc = round(accuracy_score(y_actual, y_pred)*100, 2)\n",
+    "    precision = round(precision_score(y_actual, y_pred)*100, 2)\n",
+    "    recall = round(recall_score(y_actual, y_pred)*100, 2)\n",
+    "    return {\"Accuracy\":acc, \"Precision\":precision, \"Recall\":recall}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "d119731f-67c6-4cf2-8046-038b0154ef2b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Download complete!\n"
+     ]
+    }
+   ],
+   "source": [
+    "# downloading dataset\n",
+    "url = \"https://raw.githubusercontent.com/plotly/datasets/master/diabetes.csv\"\n",
+    "filename = \"data/diabetes.csv\"\n",
+    "\n",
+    "urllib.request.urlretrieve(url, filename)\n",
+    "print(\"Download complete!\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "e7ad1b77-b698-459d-bd1f-69ba35155f8e",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Pregnancies</th>\n",
+       "      <th>Glucose</th>\n",
+       "      <th>BloodPressure</th>\n",
+       "      <th>SkinThickness</th>\n",
+       "      <th>Insulin</th>\n",
+       "      <th>BMI</th>\n",
+       "      <th>DiabetesPedigreeFunction</th>\n",
+       "      <th>Age</th>\n",
+       "      <th>Outcome</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>6</td>\n",
+       "      <td>148</td>\n",
+       "      <td>72</td>\n",
+       "      <td>35</td>\n",
+       "      <td>0</td>\n",
+       "      <td>33.6</td>\n",
+       "      <td>0.627</td>\n",
+       "      <td>50</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>1</td>\n",
+       "      <td>85</td>\n",
+       "      <td>66</td>\n",
+       "      <td>29</td>\n",
+       "      <td>0</td>\n",
+       "      <td>26.6</td>\n",
+       "      <td>0.351</td>\n",
+       "      <td>31</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>8</td>\n",
+       "      <td>183</td>\n",
+       "      <td>64</td>\n",
+       "      <td>0</td>\n",
+       "      <td>0</td>\n",
+       "      <td>23.3</td>\n",
+       "      <td>0.672</td>\n",
+       "      <td>32</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>1</td>\n",
+       "      <td>89</td>\n",
+       "      <td>66</td>\n",
+       "      <td>23</td>\n",
+       "      <td>94</td>\n",
+       "      <td>28.1</td>\n",
+       "      <td>0.167</td>\n",
+       "      <td>21</td>\n",
+       "      <td>0</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>0</td>\n",
+       "      <td>137</td>\n",
+       "      <td>40</td>\n",
+       "      <td>35</td>\n",
+       "      <td>168</td>\n",
+       "      <td>43.1</td>\n",
+       "      <td>2.288</td>\n",
+       "      <td>33</td>\n",
+       "      <td>1</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "   Pregnancies  Glucose  BloodPressure  SkinThickness  Insulin   BMI  \\\n",
+       "0            6      148             72             35        0  33.6   \n",
+       "1            1       85             66             29        0  26.6   \n",
+       "2            8      183             64              0        0  23.3   \n",
+       "3            1       89             66             23       94  28.1   \n",
+       "4            0      137             40             35      168  43.1   \n",
+       "\n",
+       "   DiabetesPedigreeFunction  Age  Outcome  \n",
+       "0                     0.627   50        1  \n",
+       "1                     0.351   31        0  \n",
+       "2                     0.672   32        1  \n",
+       "3                     0.167   21        0  \n",
+       "4                     2.288   33        1  "
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# loading the dataset\n",
+    "diabetes_df = pd.read_csv(\"data/diabetes.csv\")\n",
+    "diabetes_df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "c0274276-49c6-4c94-8bcd-71ee433d1383",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Outcome\n",
+       "0    500\n",
+       "1    268\n",
+       "Name: count, dtype: int64"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "# class distribution\n",
+    "diabetes_df.Outcome.value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "7e07d3c7-1510-4f34-8e1e-ae8986588e5f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# splitting the data\n",
+    "X = diabetes_df.drop(\"Outcome\", axis=1)\n",
+    "y = diabetes_df[\"Outcome\"]\n",
+    "\n",
+    "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1, stratify=y)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "aa7aad06-34c6-4472-a810-8d2c893436a1",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Logistic regression metrics\n",
+      "----------------------------\n",
+      "{'Accuracy': 78.57, 'Precision': 78.38, 'Recall': 53.7}\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Logistic regression model pipeline\n",
+    "lr = Pipeline([\n",
+    "    (\"scaler\", StandardScaler()),\n",
+    "    (\"model\", LogisticRegression(max_iter=1000))\n",
+    "])\n",
+    "\n",
+    "lr.fit(X_train, y_train)\n",
+    "y_pred_lr = lr.predict(X_test)\n",
+    "lr_metrics = classification_metrics(y_test, y_pred_lr)\n",
+    "\n",
+    "print(\"Logistic regression metrics\")\n",
+    "print(\"----------------------------\")\n",
+    "print(lr_metrics)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "adeaa7fb-3c43-4868-b54e-8385febae27b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Pregnancies: 0.4524\n",
+      "Glucose: 1.0755\n",
+      "BloodPressure: -0.2993\n",
+      "SkinThickness: -0.0757\n",
+      "Insulin: -0.0618\n",
+      "BMI: 0.7351\n",
+      "DiabetesPedigreeFunction: 0.4119\n",
+      "Age: 0.1693\n"
+     ]
+    }
+   ],
+   "source": [
+    "# feature importance\n",
+    "coefficients = lr.named_steps[\"model\"].coef_[0]\n",
+    "\n",
+    "for feature, coef in zip(X.columns, coefficients):\n",
+    "    print(f\"{feature}: {coef:.4f}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "beb3d787-e4a9-4189-bd66-e8021189fde6",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "SVM (linear kernel) metrics\n",
+      "----------------------------\n",
+      "{'Accuracy': 77.92, 'Precision': 76.32, 'Recall': 53.7}\n"
+     ]
+    }
+   ],
+   "source": [
+    "# SVM with linear kernel pipeline\n",
+    "svm = Pipeline([\n",
+    "    (\"scaler\", StandardScaler()),\n",
+    "    (\"model\", SVC(kernel=\"linear\"))\n",
+    "])\n",
+    "\n",
+    "svm.fit(X_train, y_train)\n",
+    "y_pred_svm = svm.predict(X_test)\n",
+    "svm_metrics = classification_metrics(y_test, y_pred_svm)\n",
+    "print(\"SVM (linear kernel) metrics\")\n",
+    "print(\"----------------------------\")\n",
+    "print(svm_metrics)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "3baefb0d-2410-4818-bbec-a4007f3be219",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "SVM (RBF kernel) metrics\n",
+      "----------------------------\n",
+      "{'Accuracy': 72.08, 'Precision': 65.71, 'Recall': 42.59}\n"
+     ]
+    }
+   ],
+   "source": [
+    "# SVM with RBF kernel pipeline\n",
+    "svm_rbf = Pipeline([\n",
+    "    (\"scaler\", StandardScaler()),\n",
+    "    (\"model\", SVC(kernel=\"rbf\"))\n",
+    "])\n",
+    "\n",
+    "svm_rbf.fit(X_train, y_train)\n",
+    "y_pred_rbf = svm_rbf.predict(X_test)\n",
+    "\n",
+    "rbf_metrics = classification_metrics(y_test, y_pred_rbf)\n",
+    "print(\"SVM (RBF kernel) metrics\")\n",
+    "print(\"----------------------------\")\n",
+    "print(rbf_metrics)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "dbe66e54-c835-4fdf-a0d0-d1896c3aa57b",
+   "metadata": {},
+   "source": [
+    "#### Hyperparameter Optimization using Grid Search"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "77713b9d-db47-48c2-bb31-63312758eda1",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Best Parameters: {'C': 10, 'gamma': 'scale', 'kernel': 'linear'}\n",
+      "Best Score: 0.7785\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Grid search without pipeline\n",
+    "\n",
+    "scaler = StandardScaler()\n",
+    "X_train_scaled = scaler.fit_transform(X_train)\n",
+    "\n",
+    "# Define parameter grid (no model__ prefix)\n",
+    "param_grid = {\n",
+    "    \"C\": [0.1, 1, 10],\n",
+    "    \"kernel\": [\"linear\", \"rbf\"],\n",
+    "    \"gamma\": [\"scale\", 0.1, 1]\n",
+    "}\n",
+    "\n",
+    "model = SVC()\n",
+    "\n",
+    "grid = GridSearchCV(model, param_grid, cv=4, scoring=\"accuracy\")\n",
+    "grid.fit(X_train_scaled, y_train)\n",
+    "\n",
+    "# Results\n",
+    "print(f\"Best Parameters: {grid.best_params_}\")\n",
+    "print(f\"Best Score: {round(grid.best_score_, 4)}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "ca8fa0ad-b9f6-4b0a-b395-00c3ca580c47",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Best Parameters: {'model__C': 10, 'model__gamma': 'scale', 'model__kernel': 'linear'}\n",
+      "Best Score: 0.7785\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Grid search with pipeline\n",
+    "\n",
+    "param_grid = {\n",
+    "    \"model__C\": [0.1, 1, 10],\n",
+    "    \"model__kernel\": [\"linear\", \"rbf\"],\n",
+    "    \"model__gamma\": [\"scale\", 0.1, 1]\n",
+    "}\n",
+    "\n",
+    "pipe = Pipeline([\n",
+    "    (\"scaler\", StandardScaler()),\n",
+    "    (\"model\", SVC())\n",
+    "])\n",
+    "\n",
+    "grid = GridSearchCV(pipe, param_grid, cv=4, scoring=\"accuracy\")\n",
+    "grid.fit(X_train, y_train)\n",
+    "\n",
+    "print(f\"Best Parameters: {grid.best_params_}\")\n",
+    "print(f\"Best Score: {round(grid.best_score_, 4)}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "26f3ae6c-3e5c-41e1-860d-994828dc6428",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Best Model metrics\n",
+      "----------------------------\n",
+      "{'Accuracy': 78.57, 'Precision': 78.38, 'Recall': 53.7}\n"
+     ]
+    }
+   ],
+   "source": [
+    "# using the best-performing model for performance evaluation\n",
+    "best_model = grid.best_estimator_\n",
+    "y_pred_best = best_model.predict(X_test)\n",
+    "\n",
+    "best_metrics = classification_metrics(y_test, y_pred_best)\n",
+    "print(\"Best Model metrics\")\n",
+    "print(\"----------------------------\")\n",
+    "print(best_metrics)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2a04ba85-90ec-4728-ba32-2670ff7914e6",
+   "metadata": {},
+   "source": [
+    "**Exercise**\n",
+    "1. Train a Naive Bayes model on this same data and use GridSearchCV for hyperparameter optimization. How do the results compare to the Logistic regression and SVM models?\n",
+    "2.  Optimize SVM polynomial kernel (degree 2-3) and contrast performance with the RBF and linear kernels.\n",
+    "3.  Perform k-fold cross-validation (k=10) on the original Logistic Regression model and the best SVM model. Plot the mean CV accuracy with standard deviation bands using matplotlib. Which model shows more stable performance across folds?\n",
+    "4.  Engineer a new feature (Insulin/BMI), retrain the best SVM, and assess any improvement with plots."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "9ef463c7-81c2-44cb-8753-b2369a62523b",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.19"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
